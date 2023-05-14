@@ -89,5 +89,6 @@ class ResnetBlock(nn.Module):
         h = self.dropout(h)
         h = self.conv2(h)
 
-        x = self.nin_shortcut(x)
+        if self.in_channels != self.out_channels:
+            x = self.nin_shortcut(x)
         return x+h
