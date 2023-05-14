@@ -80,7 +80,7 @@ class NutrientsLogger(pl.Callback):
         self.y = y[:num_samples]
 
 
-    def on_validation_batch_end(self, trainer, pl_module):
+    def on_validation_epoch_end(self, trainer, pl_module):
         images = self.x
         pred_nutr_info = pl_module(images)
         true_nutr_info = self.y
