@@ -4,7 +4,7 @@ from torch import nn
 import pytorch_lightning as pl
 from torchvision.utils import make_grid
 
-from .encoder import Encoder
+from encoder import Encoder
 
 
 class NutrPred(pl.LightningModule):

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from .resblock import ResnetBlock
+from resblock import ResnetBlock
 
 
 class Downsample(nn.Module):
