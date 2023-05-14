@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import argparse
 
 from food_dataset import FoodDataset
-from nutr_pred import NutrPred
+from nutr_pred import NutrPred, NutrientsLogger
 
 
 def main(args):
@@ -30,6 +30,7 @@ def main(args):
         batch_size=args.batch_size,
         shuffle=False
     )
+    samples = next(iter(val_loader))
 
     wandb_logger = WandbLogger(
         project='nutr_pred',
@@ -41,6 +42,7 @@ def main(args):
         logger=wandb_logger,
         gpus=-1,
         max_epochs=args.epochs,
+        callbacks=[NutrientsLogger(samples)]
     )
     model = NutrPred(
         in_channels=args.in_channels,

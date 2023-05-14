@@ -58,27 +58,6 @@ class NutrPred(pl.LightningModule):
         pred = self(x)
         loss = self.loss_function(pred, y)
         self.log('val_loss', loss)
-
-        # Log images with predicted and ground-truth nutrients
-        if batch_idx == 0:
-            # Get the first 8 images in the batch
-            images = x[:8]
-            # Get the predicted and ground-truth nutrients for the first 8 images
-            pred_nutr_info = pred[:8]
-            true_nutr_info = y[:8]
-            # Create a grid of the images with their predicted and ground-truth nutrients
-            grid = make_grid(images, nrow=4, normalize=True, scale_each=True)
-            grid = wandb.Image(grid.permute(1, 2, 0).cpu().numpy())
-            # Create a dictionary that maps nutrient names to their values
-            nutrient_names = ['kcal_100', 'mass', 'prot_100', 'fat_100', 'carb_100']
-            pred_nutr_dict = [{name: value.item() for name, value in zip(nutrient_names, sample)} 
-                              for sample in pred_nutr_info]
-            true_nutr_dict = [{name: value.item() for name, value in zip(nutrient_names, sample)} 
-                              for sample in true_nutr_info]
-            # Log the grid of images with their predicted and ground-truth nutrients
-            wandb.log({'predicted_nutrients': wandb.Table(data=pred_nutr_dict),
-                       'true_nutrients': wandb.Table(data=true_nutr_dict),
-                       'images': grid})
         return loss
     
     def test_step(self, batch, batch_idx):
@@ -91,3 +70,31 @@ class NutrPred(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
         return optimizer
+
+
+class NutrientsLogger(pl.Callback):
+    def __init__(self, val_batch, num_samples=30) -> None:
+        super().__init__()
+        x, y = val_batch['image'], val_batch['nutr_info']
+        self.x = x[:num_samples]
+        self.y = y[:num_samples]
+
+
+    def on_validation_batch_end(self, trainer, pl_module):
+        images = self.x
+        pred_nutr_info = pl_module(images)
+        true_nutr_info = self.y
+
+        columns = ['Input image', 'Prediction', 'Expected']
+        data = [
+            [
+                wandb.Image(images[idx].permute(1, 2, 0).cpu().numpy()), 
+                pred_nutr_info[idx].tolist(),
+                true_nutr_info[idx].tolist()
+            ] 
+            for idx in range(8)
+        ]
+
+        # Log the grid of images with their predicted and ground-truth nutrients
+        table = wandb.Table(columns=columns, data=data)
+        trainer.logger.experiment.log({'nutrients': table})
