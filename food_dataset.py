@@ -1,12 +1,17 @@
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
+import torch
+from torch.utils.data import Dataset
+from torchvision import transforms
 from PIL import Image
 
 
 class FoodDataset(Dataset):
 
-    def __init__(self, path_to_csv: str, path_to_imgs: str, is_read_all: bool, scale: int):
+    def __init__(self, 
+                path_to_csv: str = './dataset/train/train.csv', 
+                path_to_imgs: str = './dataset/train', 
+                is_read_all: bool = True, 
+                scale: int = 128):
         self.nutr_info = pd.read_csv(path_to_csv)
         self.path_to_imgs = path_to_imgs
         self.is_read_all = is_read_all
@@ -16,7 +21,7 @@ class FoodDataset(Dataset):
                            for i in self.nutr_info.img]
 
     def __len__(self):
-        return len(self.self.nutr_info)
+        return len(self.nutr_info)
     
     def transform(self, img):
         size = min(img.size)
@@ -33,4 +38,5 @@ class FoodDataset(Dataset):
             image = self.transform(Image.open(
                 f'{self.path_to_imgs}/{self.nutr_info.img.iloc[idx]}.png'))
         sample['image'] = image
+        sample['nutr_info'] = torch.tensor(list(sample.values()))
         return sample
