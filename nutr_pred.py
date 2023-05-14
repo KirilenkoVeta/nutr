@@ -82,7 +82,7 @@ class NutrientsLogger(pl.Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         images = self.x
-        pred_nutr_info = pl_module(images)
+        pred_nutr_info = pl_module(images.to(pl_module.device))
         true_nutr_info = self.y
 
         columns = ['Input image', 'Prediction', 'Expected']
