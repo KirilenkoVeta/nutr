@@ -30,9 +30,11 @@ class FoodDataset(Dataset):
                                    transforms.ToTensor()])(img)
     
     def __getitem__(self, idx):
-        sample = dict(self.nutr_info[['kcal_100', 'mass', 'prot_100', 
-                                      'fat_100', 'carb_100']].iloc[idx])
-        sample['nutr_info'] = torch.tensor(list(sample.values())).to(torch.float32)
+        sample = dict()
+        sample['nutr_info'] = torch.tensor(list(
+            self.nutr_info[['kcal_100', 'mass', 'prot_100', 'fat_100', 
+                            'carb_100']].iloc[idx].values)).to(torch.float32)
+        sample['text'] = self.nutr_info.text.iloc[idx]
         if self.is_read_all:
             image = self.images[idx]
         else:
