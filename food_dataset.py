@@ -4,6 +4,8 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
 
+from transformers import AutoTokenizer
+
 
 class FoodDataset(Dataset):
 
@@ -19,6 +21,7 @@ class FoodDataset(Dataset):
         if self.is_read_all:
             self.images = [self.transform(Image.open(f'{self.path_to_imgs}/{i}.png')) 
                            for i in self.nutr_info.img]
+        self.tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
 
     def __len__(self):
         return len(self.nutr_info)
@@ -31,10 +34,19 @@ class FoodDataset(Dataset):
     
     def __getitem__(self, idx):
         sample = dict()
+        
         sample['nutr_info'] = torch.tensor(list(
             self.nutr_info[['kcal_100', 'mass', 'prot_100', 'fat_100', 
                             'carb_100']].iloc[idx].values)).to(torch.float32)
-        sample['text'] = self.nutr_info.text.iloc[idx]
+        
+        sample['text'] = self.tokenizer.encode_plus(
+            self.nutr_info.text.iloc[idx],
+            truncation=True,
+            padding='max_length',
+            max_length=64,
+            return_tensors='pt'
+        )
+        
         if self.is_read_all:
             image = self.images[idx]
         else:
