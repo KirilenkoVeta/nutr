@@ -18,9 +18,11 @@ class NutrPred(pl.LightningModule):
                 downsample_steps_after=2,
                 dropout=0.20,
                 mlp_hidden=128,
-                lr=0.0003):
+                lr=0.0003,
+                device='cuda'):
         super().__init__()
         self.save_hyperparameters()
+        self.acc = device
 
         # module that encodes an image into a featuremap
         self.encoder = Encoder(
@@ -44,7 +46,7 @@ class NutrPred(pl.LightningModule):
         self.loss_function = nn.L1Loss()
 
     def forward(self, batch):
-        x = batch['image']
+        x = batch['image'].to(self.acc)
         x = self.encoder(x)
         x = self.mlp(x)
         return x
@@ -84,8 +86,9 @@ class NutrPredText(NutrPred):
                 downsample_steps_after=2,
                 dropout=0.20,
                 mlp_hidden=128,
-                lr=0.0003):
-        super().__init__(in_channels, hidden_channels, downsample_steps_before, conv_steps, downsample_steps_after, dropout, mlp_hidden, lr)
+                lr=0.0003,
+                device='cuda'):
+        super().__init__(in_channels, hidden_channels, downsample_steps_before, conv_steps, downsample_steps_after, dropout, mlp_hidden, lr, device)
         self.text_encoder = AutoModel.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
         self.mlp = nn.Sequential(
             nn.Flatten(),
@@ -103,7 +106,7 @@ class NutrPredText(NutrPred):
         return self.text_encoder(text)[0].mean(dim=1)
     
     def forward(self, batch):
-        x, text = batch['image'], batch['text']
+        x, text = batch['image'].to(self.acc), batch['text'].to(self.acc)
         x = self.encoder(x)
         text = self.encode_text(text)
         x = torch.cat([x, text], dim=-1)
