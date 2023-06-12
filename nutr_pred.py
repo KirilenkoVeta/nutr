@@ -40,7 +40,7 @@ class NutrPred(pl.LightningModule):
             nn.Linear(2 * 2 * hidden_channels, mlp_hidden),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(mlp_hidden, 5)
+            nn.Linear(mlp_hidden, 4)
         )
         self.lr = lr
         self.loss_function = nn.L1Loss()
@@ -91,23 +91,25 @@ class NutrPredText(NutrPred):
         super().__init__(in_channels, hidden_channels, downsample_steps_before, conv_steps, downsample_steps_after, dropout, mlp_hidden, lr, device)
         self.text_encoder = AutoModel.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
         self.mlp = nn.Sequential(
-            nn.Flatten(),
             nn.Linear(2 * 2 * hidden_channels + 384, mlp_hidden),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(mlp_hidden, 5)
+            nn.Linear(mlp_hidden, 4)
         )
+        self.flatten = nn.Flatten()
 
     @torch.no_grad()
     def encode_text(self, text):
         return self.text_encoder(text)[0].mean(dim=1)
     
     def forward(self, batch):
-        x, text = batch['image'].to(self.acc), batch['text'].to(self.acc)
+        x, text = batch['image'].to(self.acc), batch['text']['input_ids'].to(self.acc)
+        text = text[:, 0, :]
         x = self.encoder(x)
+        x = self.flatten(x)
         text = self.encode_text(text)
         x = torch.cat([x, text], dim=-1)
         x = self.mlp(x)
