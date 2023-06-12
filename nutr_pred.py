@@ -40,7 +40,7 @@ class NutrPred(pl.LightningModule):
             nn.Linear(2 * 2 * hidden_channels, mlp_hidden),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(mlp_hidden, 4)
+            nn.Linear(mlp_hidden, 5)
         )
         self.lr = lr
         self.loss_function = nn.L1Loss()
@@ -97,7 +97,7 @@ class NutrPredText(NutrPred):
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(mlp_hidden, 4)
+            nn.Linear(mlp_hidden, 5)
         )
         self.flatten = nn.Flatten()
 
