@@ -53,6 +53,7 @@ class NutrPred(pl.LightningModule):
         )
         self.lr = lr
         self.loss_function = my_loss
+        self.log_loss = nn.L1Loss()
 
     def forward(self, batch):
         x = batch['image'].to(self.acc)
@@ -72,6 +73,7 @@ class NutrPred(pl.LightningModule):
         pred = self(batch)
         loss = self.loss_function(pred, y)
         self.log('val_loss', loss)
+        self.log('l1_Loss', self.log_loss(pred, y))
         return loss
     
     def test_step(self, batch, batch_idx):
