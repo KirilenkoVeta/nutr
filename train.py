@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import wandb
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 
 import argparse
@@ -38,11 +39,14 @@ def main(args):
     )
     wandb_logger.log_hyperparams(args)
 
+    checkpoint_callback = ModelCheckpoint(dirpath="./checkpoints", save_top_k=1, 
+    monitor="val_loss")
     trainer = pl.Trainer(
         logger=wandb_logger,
-        gpus=-1,
+        devices=-1,
+        accelerator="gpu",
         max_epochs=args.epochs,
-        callbacks=[NutrientsLogger(samples)]
+        callbacks=[NutrientsLogger(samples), checkpoint_callback]
     )
     model = NutrPred(
         in_channels=args.in_channels,
