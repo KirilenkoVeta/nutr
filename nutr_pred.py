@@ -9,6 +9,15 @@ from transformers import AutoModel
 from encoder import Encoder
 
 
+def my_loss(pred, gt):
+    source_loss = nn.L1Loss()
+    pred_prot = pred[:, -3]
+    pred_fat = pred[:, -2]
+    pred_carb = pred[:, -1]
+    pred_calc_ccal = 4 * pred_prot + 4 * pred_carb + 9 * pred_fat
+    return source_loss(pred, gt) + source_loss(pred_calc_ccal, gt[:, 0])
+
+
 class NutrPred(pl.LightningModule):
     def __init__(self, 
                 in_channels=3, 
@@ -43,7 +52,7 @@ class NutrPred(pl.LightningModule):
             nn.Linear(mlp_hidden, 5)
         )
         self.lr = lr
-        self.loss_function = nn.L1Loss()
+        self.loss_function = my_loss
 
     def forward(self, batch):
         x = batch['image'].to(self.acc)
